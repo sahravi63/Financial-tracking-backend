@@ -1,25 +1,12 @@
-// authenticate.js
-const jwt = require('jsonwebtoken');
-const User = require('../db/User');
+const express = require('express');
+const router = express.Router();
+const authenticate = require('../middleware/authenticate');
+const { addExpense, getExpenses, updateExpense, deleteExpense } = require('../controllers/expenseController');
 
-const authenticate = async (req, res, next) => {
-  try {
-    const token = req.headers['authorization'];
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
+// Apply the authenticate middleware to routes that require authentication
+router.post('/', authenticate, addExpense); // Add a new expense
+router.get('/', authenticate, getExpenses); // Get all expenses for the authenticated user
+router.put('/:id', authenticate, updateExpense); // Update an expense by ID
+router.delete('/:id', authenticate, deleteExpense); // Delete an expense by ID
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
-    req.user = user; // Attach user to request
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-};
-
-module.exports = authenticate;
+module.exports = router;
