@@ -13,7 +13,7 @@ const expenseSchema = new mongoose.Schema({
   },
   date: {
     type: Date,
-    default: Date.now,
+    default: Date.now, // Default to current date
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,

@@ -1,4 +1,5 @@
 const express = require("express");
+const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -17,7 +18,6 @@ const Expense = require("./db/Expense");
 const expenseRoutes = require("./routes/expenseRoutes");
 const authenticate = require("./middleware/authenticate");
 
-const app = express();
 const saltRounds = 10;
 
 // Middleware
@@ -262,8 +262,41 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
+app.delete('/api/expenses/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const expense = await Expense.findByIdAndDelete(id);
+    if (!expense) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+    res.json({ message: 'Expense deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/expenses/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { description, amount } = req.body;
+  try {
+    const updatedExpense = await Expense.findByIdAndUpdate(
+      id,
+      { description, amount },
+      { new: true }
+    );
+    if (!updatedExpense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
+    res.json(updatedExpense);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating expense' });
+  }
+});
+
+
 // Use the expense routes
-app.use("/api/expenses", authenticate, expenseRoutes);
+app.use(express.json());
+app.use('/api/expenses', expenseRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
